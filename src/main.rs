@@ -14,7 +14,7 @@ use sha2::{Digest, Sha256};
 
 
 fn main() -> io::Result<()> {
-    const MAX_THREADS: usize = 12;
+    let max_threads: usize = thread::available_parallelism()?.get();
 
     let start = SystemTime::now();
     let directory_path = Path::new(r"C:\Users\Admin\Documents\Projects\Rust\scratch\src\world\region");
@@ -24,16 +24,11 @@ fn main() -> io::Result<()> {
 
     let total_files = entries.len();
 
-    let hash_dict = Arc::new(Mutex::new(
-        load_hash_dict("hash_dict.json").unwrap_or_else(|_| {
-            println!("Warning: Failed to load hash dictionary. Starting with an empty dictionary.");
-            HashMap::new()
-        })
-    ));
+    let hash_dict = Arc::new(Mutex::new(load_hash_dict("hash_dict.json").unwrap_or_default()));
 
     let (tx, rx): (Sender<usize>, Receiver<usize>) = mpsc::channel();
     let tx_progress = tx.clone();
-    let progress_handle = thread::spawn(move || {
+    thread::spawn(move || {
         let mut processed_count = 0;
         while let Ok(index) = rx.recv() {
             processed_count += 1;
@@ -50,7 +45,7 @@ fn main() -> io::Result<()> {
         let tx = tx_progress.clone();
 
         if path.extension().map_or(false, |ext| ext == "mca") {
-            if handles.len() >= MAX_THREADS {
+            if handles.len() >= max_threads {
                 let handle: JoinHandle<()> = handles.remove(0);
                 handle.join().expect("DEATHCON 3 THREAD PANICKED");
             }
