@@ -14,7 +14,7 @@ use sha2::{Digest, Sha256};
 
 
 fn main() -> io::Result<()> {
-    let max_threads: usize = std::thread::available_parallelism()?.get();
+    let max_threads: usize = thread::available_parallelism()?.get();
 
     let start = SystemTime::now();
     let directory_path = Path::new(r"C:\Users\Admin\Documents\Projects\Rust\scratch\src\world\region");
